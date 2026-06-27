@@ -117,6 +117,37 @@ button:disabled {
   min-width: 260px;
 }
 
+.guideButton {
+  position: relative;
+}
+
+.buttonTip {
+  background: #101828;
+  border-radius: 8px;
+  bottom: -54px;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  left: 50%;
+  line-height: 1.35;
+  opacity: 0;
+  padding: 9px 10px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%) translateY(-4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  width: 220px;
+  z-index: 20;
+}
+
+.guideButton:hover .buttonTip,
+.guideButton:focus-visible .buttonTip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 .apiBadge {
   align-items: center;
   border: 1px solid var(--line);
@@ -154,6 +185,103 @@ button:disabled {
   margin-bottom: 16px;
 }
 
+.executivePanel {
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.09), rgba(15, 159, 143, 0.08)),
+    rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(300px, 1.2fr) minmax(360px, 1.35fr) minmax(280px, 0.95fr);
+  margin-bottom: 16px;
+  padding: 22px;
+}
+
+.sectionPill {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 7px;
+  letter-spacing: 0.02em;
+  min-height: 32px;
+  padding: 6px 10px;
+}
+
+.executiveCopy h2 {
+  font-size: clamp(1.45rem, 2.5vw, 2.35rem);
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 14px 0 10px;
+}
+
+.executiveCopy p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.primaryReadGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.primaryRead {
+  border-left: 3px solid rgba(37, 99, 235, 0.38);
+  padding: 5px 10px 6px 12px;
+}
+
+.primaryRead span,
+.primaryRead p {
+  color: var(--muted);
+  display: block;
+  font-size: 0.83rem;
+  line-height: 1.38;
+  margin: 0;
+}
+
+.primaryRead span {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.primaryRead strong {
+  display: block;
+  font-size: 1.5rem;
+  margin: 5px 0;
+}
+
+.signalList {
+  align-content: start;
+  display: grid;
+  gap: 10px;
+}
+
+.signalList div {
+  align-items: flex-start;
+  border-top: 1px solid rgba(228, 231, 236, 0.95);
+  color: var(--muted);
+  display: grid;
+  font-size: 0.89rem;
+  gap: 8px;
+  grid-template-columns: 18px 1fr;
+  line-height: 1.4;
+  padding: 10px 0 0;
+}
+
+.signalList svg {
+  color: var(--green);
+  margin-top: 1px;
+}
+
 .kpi,
 .panel,
 .insight {
@@ -186,6 +314,13 @@ button:disabled {
   margin: 0;
 }
 
+.kpiLabel {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  min-height: 20px;
+}
+
 .kpi p {
   font-size: 0.82rem;
   font-weight: 800;
@@ -204,6 +339,43 @@ button:disabled {
   display: block;
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.metricHint {
+  align-items: center;
+  color: var(--soft);
+  cursor: help;
+  display: inline-flex;
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.metricBubble {
+  background: #101828;
+  border-radius: 8px;
+  bottom: 22px;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 650;
+  left: 50%;
+  line-height: 1.35;
+  opacity: 0;
+  padding: 9px 10px;
+  pointer-events: none;
+  position: absolute;
+  text-transform: none;
+  transform: translateX(-50%) translateY(4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  width: min(260px, 70vw);
+  z-index: 25;
+}
+
+.metricHint:hover .metricBubble,
+.metricHint:focus .metricBubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .insightGrid {
@@ -241,6 +413,78 @@ button:disabled {
 
 .insightNeutral {
   border-left-color: var(--blue);
+}
+
+.decisionBadge {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 850;
+  gap: 7px;
+  min-height: 34px;
+  padding: 7px 11px;
+}
+
+.recommendationGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recommendation {
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  padding: 14px 0 0;
+}
+
+.recommendation div {
+  align-items: center;
+  display: flex;
+  gap: 9px;
+}
+
+.recommendation strong {
+  line-height: 1.25;
+}
+
+.recommendation p {
+  color: var(--muted);
+  font-size: 0.91rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.recommendation b {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.priority {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.priority.high {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.priority.medium {
+  background: #fff7ed;
+  color: #b45309;
+}
+
+.priority.low {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .dashboardGrid {
@@ -331,6 +575,105 @@ button:disabled {
   border-radius: 50%;
   height: 8px;
   width: 8px;
+}
+
+.modalLayer {
+  align-items: center;
+  background: rgba(16, 24, 40, 0.58);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 100;
+}
+
+.readGuide {
+  background: var(--panel);
+  border: 1px solid rgba(228, 231, 236, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 30px 100px rgba(16, 24, 40, 0.35);
+  max-height: min(820px, calc(100vh - 48px));
+  max-width: 1180px;
+  overflow: auto;
+  padding: 22px;
+  width: min(1180px, 100%);
+}
+
+.readGuideHeader {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding-bottom: 18px;
+}
+
+.readGuideHeader h2 {
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  letter-spacing: 0;
+  line-height: 1.05;
+  margin: 13px 0 9px;
+}
+
+.readGuideHeader p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 760px;
+}
+
+.iconButton {
+  border-radius: 8px;
+  flex: 0 0 auto;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px;
+  width: 38px;
+}
+
+.readGuideGrid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1fr) minmax(260px, 0.85fr);
+  padding-top: 18px;
+}
+
+.guideBlock {
+  min-width: 0;
+}
+
+.guideBlock h3 {
+  font-size: 1.02rem;
+  margin: 0 0 12px;
+}
+
+.guideStep,
+.definitionList div,
+.caveats p {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 12px;
+}
+
+.guideStep + .guideStep,
+.definitionList div + div,
+.caveats p + p {
+  padding-top: 12px;
+}
+
+.guideStep strong,
+.definitionList strong {
+  display: block;
+  line-height: 1.3;
+}
+
+.guideStep p,
+.definitionList p,
+.caveats p {
+  color: var(--muted);
+  font-size: 0.91rem;
+  line-height: 1.48;
+  margin: 5px 0 0;
 }
 
 .funnelList {
@@ -610,6 +953,18 @@ td span {
 }
 
 @media (max-width: 1180px) {
+  .executivePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendationGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .readGuideGrid {
+    grid-template-columns: 1fr;
+  }
+
   .kpiGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -635,6 +990,38 @@ td span {
   .actions {
     justify-content: flex-start;
     margin-top: 18px;
+  }
+
+  .buttonTip,
+  .metricBubble {
+    left: 0;
+    transform: translateY(4px);
+  }
+
+  .guideButton:hover .buttonTip,
+  .guideButton:focus-visible .buttonTip,
+  .metricHint:hover .metricBubble,
+  .metricHint:focus .metricBubble {
+    transform: translateY(0);
+  }
+
+  .primaryReadGrid,
+  .recommendationGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalLayer {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .readGuide {
+    max-height: calc(100vh - 24px);
+    padding: 16px;
+  }
+
+  .readGuideHeader {
+    display: grid;
   }
 
   .kpiGrid,

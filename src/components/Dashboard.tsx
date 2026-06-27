@@ -22,16 +22,21 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  BookOpen,
   CheckCircle2,
+  ClipboardCheck,
+  Compass,
   Database,
   DollarSign,
   Download,
   Filter,
+  HelpCircle,
   RefreshCw,
   Search,
   Target,
   TrendingUp,
-  Users
+  Users,
+  X
 } from "lucide-react";
 import type { DailyPoint, InsightData, Segment, ThemeItem, Tone } from "@/types/insights";
 
@@ -115,6 +120,15 @@ function toneClass(tone: Tone) {
   return "insight insightNeutral";
 }
 
+function MetricHint({ text }: { text: string }) {
+  return (
+    <span className="metricHint" tabIndex={0} aria-label={text}>
+      <HelpCircle size={14} />
+      <span className="metricBubble">{text}</span>
+    </span>
+  );
+}
+
 function CustomTooltip({
   active,
   payload,
@@ -152,13 +166,15 @@ function KpiCard({
   label,
   value,
   sub,
-  accent
+  accent,
+  hint
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
   sub: string;
   accent: string;
+  hint: string;
 }) {
   return (
     <article className="kpi">
@@ -166,7 +182,10 @@ function KpiCard({
         {icon}
       </div>
       <div>
-        <p>{label}</p>
+        <div className="kpiLabel">
+          <p>{label}</p>
+          <MetricHint text={hint} />
+        </div>
         <strong>{value}</strong>
         <span>{sub}</span>
       </div>
@@ -262,6 +281,132 @@ function ThemeBars({ title, answered, themes }: { title: string; answered: numbe
   );
 }
 
+function ExecutiveSummaryPanel({ data }: { data: InsightData }) {
+  return (
+    <section className="executivePanel" aria-label="Executive summary">
+      <div className="executiveCopy">
+        <span className="sectionPill">
+          <Compass size={15} />
+          Executive read
+        </span>
+        <h2>{data.executiveSummary.title}</h2>
+        <p>{data.executiveSummary.body}</p>
+      </div>
+      <div className="primaryReadGrid">
+        {data.executiveSummary.primaryRead.map((item) => (
+          <div className="primaryRead" key={item.label}>
+            <span>{item.label}</span>
+            <strong>{item.value}</strong>
+            <p>{item.detail}</p>
+          </div>
+        ))}
+      </div>
+      <div className="signalList">
+        {data.executiveSummary.strongestSignals.slice(0, 5).map((signal) => (
+          <div key={signal}>
+            <CheckCircle2 size={16} />
+            <span>{signal}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecommendationPanel({ data }: { data: InsightData }) {
+  return (
+    <section className="panel wide">
+      <SectionHeader
+        eyebrow="Operating priorities"
+        title="What to do with this read"
+        right={
+          <span className="decisionBadge">
+            <ClipboardCheck size={15} />
+            Ranked by decision impact
+          </span>
+        }
+      />
+      <div className="recommendationGrid">
+        {data.recommendations.map((recommendation) => (
+          <article className="recommendation" key={recommendation.title}>
+            <div>
+              <span className={`priority ${recommendation.priority.toLowerCase()}`}>{recommendation.priority}</span>
+              <strong>{recommendation.title}</strong>
+            </div>
+            <p>{recommendation.body}</p>
+            <b>{recommendation.metric}</b>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ReadGuideModal({
+  data,
+  onClose
+}: {
+  data: InsightData;
+  onClose: () => void;
+}) {
+  return (
+    <div className="modalLayer" role="presentation" onMouseDown={onClose}>
+      <section
+        className="readGuide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="read-guide-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="readGuideHeader">
+          <div>
+            <span className="sectionPill">
+              <BookOpen size={15} />
+              Dashboard guide
+            </span>
+            <h2 id="read-guide-title">How to read this dashboard</h2>
+            <p>{data.readGuide.summary}</p>
+          </div>
+          <button type="button" className="iconButton" onClick={onClose} aria-label="Close guide">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="readGuideGrid">
+          <div className="guideBlock guideOrder">
+            <h3>Read order</h3>
+            {data.readGuide.order.map((item) => (
+              <div className="guideStep" key={item.title}>
+                <strong>{item.title}</strong>
+                <p>{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="guideBlock">
+            <h3>Metric glossary</h3>
+            <div className="definitionList">
+              {data.readGuide.metricDefinitions.map((item) => (
+                <div key={item.metric}>
+                  <strong>{item.metric}</strong>
+                  <p>{item.definition}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="guideBlock caveats">
+            <h3>Decision caveats</h3>
+            {data.readGuide.caveats.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function downloadJson(data: InsightData) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -280,6 +425,7 @@ export function Dashboard({ initialData }: DashboardProps) {
     "cash"
   );
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [apiState, setApiState] = useState<"ready" | "refreshing" | "error">("ready");
 
   async function refreshData() {
@@ -300,6 +446,14 @@ export function Dashboard({ initialData }: DashboardProps) {
 
   useEffect(() => {
     refreshData();
+  }, []);
+
+  useEffect(() => {
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsGuideOpen(false);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
   }, []);
 
   const segmentRows = useMemo(() => {
@@ -349,6 +503,11 @@ export function Dashboard({ initialData }: DashboardProps) {
             {apiState === "error" ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
             {apiState === "refreshing" ? "Refreshing API" : apiState === "error" ? "API fallback" : "API live"}
           </span>
+          <button type="button" className="guideButton" onClick={() => setIsGuideOpen(true)}>
+            <BookOpen size={16} />
+            {data.readGuide.buttonLabel}
+            <span className="buttonTip">Open the read order, metric glossary, and data caveats.</span>
+          </button>
           <button type="button" onClick={refreshData} disabled={isRefreshing}>
             <RefreshCw size={16} className={isRefreshing ? "spin" : ""} />
             Refresh
@@ -360,6 +519,8 @@ export function Dashboard({ initialData }: DashboardProps) {
         </div>
       </header>
 
+      <ExecutiveSummaryPanel data={data} />
+
       <section className="kpiGrid" aria-label="Lead dashboard KPIs">
         <KpiCard
           icon={<Users size={22} />}
@@ -367,6 +528,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={numberFormat(data.summary.totalLeads)}
           sub={`${numberFormat(data.summary.scoredLeads)} scored, ${pct(data.dataQuality.scoreCoverage)} coverage`}
           accent={colors.blue}
+          hint="Total imported CSV rows. This is the widest denominator and should not be confused with CRM-qualified leads."
         />
         <KpiCard
           icon={<DollarSign size={22} />}
@@ -374,6 +536,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={money(data.summary.cashCollected, true)}
           sub={`${money(data.summary.rates.cashPerLead)} per captured lead`}
           accent={colors.green}
+          hint="Sum of Cash_Collected_USD. Revenue views use cash records, which may not always match the closed flag."
         />
         <KpiCard
           icon={<Target size={22} />}
@@ -381,6 +544,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={numberFormat(data.summary.bookedCalls)}
           sub={`${pct(data.summary.rates.bookedFromCrmRate)} of CRM leads`}
           accent={colors.teal}
+          hint="Rows marked Close_Booked_Call = Yes. The sub-metric divides booked calls by leads present in Close CRM."
         />
         <KpiCard
           icon={<TrendingUp size={22} />}
@@ -388,6 +552,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={numberFormat(data.summary.closedDeals)}
           sub={`${pct(data.summary.rates.closeFromBookedRate)} of booked calls`}
           accent={colors.amber}
+          hint="Rows marked Close_Closed = Yes. Use beside cash collected because payment data can exist without the flag."
         />
         <KpiCard
           icon={<Activity size={22} />}
@@ -395,6 +560,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={data.summary.avgLeadScore.toFixed(2)}
           sub={`Median ${data.summary.medianLeadScore.toFixed(2)}, IQR ${data.summary.scoreP25.toFixed(2)}-${data.summary.scoreP75.toFixed(2)}`}
           accent={colors.purple}
+          hint="Average of numeric Lead Score values only. Missing scores are excluded from the average."
         />
         <KpiCard
           icon={<BarChart3 size={22} />}
@@ -402,6 +568,7 @@ export function Dashboard({ initialData }: DashboardProps) {
           value={`${healthScore}%`}
           sub={`${data.dataQuality.quiz.completedAtLeastEight.toLocaleString()} quiz-rich leads`}
           accent={healthScore >= 70 ? colors.green : colors.red}
+          hint="Blended quality signal using score coverage, quiz completeness, and duplicate-phone cleanliness."
         />
       </section>
 
@@ -413,6 +580,8 @@ export function Dashboard({ initialData }: DashboardProps) {
           </article>
         ))}
       </section>
+
+      <RecommendationPanel data={data} />
 
       <section className="dashboardGrid twoCol">
         <article className="panel">
@@ -732,6 +901,8 @@ export function Dashboard({ initialData }: DashboardProps) {
           ))}
         </div>
       </section>
+
+      {isGuideOpen ? <ReadGuideModal data={data} onClose={() => setIsGuideOpen(false)} /> : null}
     </main>
   );
 }

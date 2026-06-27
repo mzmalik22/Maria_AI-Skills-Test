@@ -550,6 +550,192 @@ function buildInsights(summary, segments, dataQuality, themeAnalysis) {
   return insights;
 }
 
+function buildExecutiveSummary(summary, segments, dataQuality) {
+  const preWebinarYes = segments.preWebinar.find((item) => item.name === "Yes");
+  const preWebinarNo = segments.preWebinar.find((item) => item.name === "No");
+  const bGrade = segments.grades.find((item) => item.name === "B");
+  const email = segments.sources.find((item) => item.name === "email");
+  const fb = segments.sources.find((item) => item.name === "fb");
+  const unattributed = segments.sources.find((item) => item.name === "Unattributed");
+
+  return {
+    title: "Revenue is concentrated in intent-rich CRM cohorts, not raw lead volume.",
+    body: `Only ${pct(summary.rates.crmRate)} of captured leads are in Close CRM, but those records hold the collected cash. The strongest read is to compare segments by cash per lead, close rate, and attribution quality before making budget calls.`,
+    primaryRead: [
+      {
+        label: "Tracked CRM coverage",
+        value: pct(summary.rates.crmRate),
+        detail: `${summary.crmLeads.toLocaleString()} of ${summary.totalLeads.toLocaleString()} captured leads are present in CRM.`
+      },
+      {
+        label: "Booked-call conversion",
+        value: pct(summary.rates.bookedFromCrmRate),
+        detail: `${summary.bookedCalls.toLocaleString()} booked calls from ${summary.crmLeads.toLocaleString()} CRM leads.`
+      },
+      {
+        label: "Revenue per lead",
+        value: money(summary.rates.cashPerLead),
+        detail: `${money(summary.cashCollected)} collected across the full captured-lead base.`
+      },
+      {
+        label: "Status consistency gap",
+        value: dataQuality.cashVsClosedMismatch.toLocaleString(),
+        detail: "Cash records above closed flags; reconcile before using close flags as the only revenue truth."
+      }
+    ],
+    strongestSignals: [
+      preWebinarYes
+        ? `Pre-webinar Yes leads generate ${money(preWebinarYes.cashPerLead)} per lead with a ${pct(preWebinarYes.closedRate)} lead-to-close rate.`
+        : "",
+      bGrade
+        ? `B-grade leads contribute ${money(bGrade.cash)} and ${pct(bGrade.revenueShare)} of collected cash.`
+        : "",
+      email
+        ? `Email source leads close at ${pct(email.closedRate)} and return ${money(email.cashPerLead)} per lead.`
+        : "",
+      fb
+        ? `Facebook source volume is large, but cash per lead is ${money(fb.cashPerLead)} with a ${pct(fb.closedRate)} close rate.`
+        : "",
+      unattributed
+        ? `Unattributed source rows contain ${money(unattributed.cash)}, which is too material to ignore.`
+        : ""
+    ].filter(Boolean)
+  };
+}
+
+function buildRecommendations(summary, segments, dataQuality, themeAnalysis) {
+  const recommendations = [];
+  const unattributed = segments.sources.find((item) => item.name === "Unattributed");
+  const preWebinarYes = segments.preWebinar.find((item) => item.name === "Yes");
+  const preWebinarNo = segments.preWebinar.find((item) => item.name === "No");
+  const fb = segments.sources.find((item) => item.name === "fb");
+  const email = segments.sources.find((item) => item.name === "email");
+  const bestCapital = segments.capital
+    .filter((item) => item.leads >= 40 && item.name !== "Not answered")
+    .sort((a, b) => b.cashPerLead - a.cashPerLead)[0];
+  const topTheme = themeAnalysis.worthTime.themes[0];
+
+  if (unattributed && unattributed.cash > 0) {
+    recommendations.push({
+      priority: "High",
+      title: "Repair attribution before scaling spend",
+      body: `${money(unattributed.cash)} sits in unattributed source rows. Fix UTM capture and CRM sync so paid-channel ROI is not understated or misallocated.`,
+      metric: `${pct(unattributed.revenueShare)} of collected cash`
+    });
+  }
+
+  if (preWebinarYes && preWebinarNo) {
+    recommendations.push({
+      priority: "High",
+      title: "Separate pre-webinar and post-webinar operating views",
+      body: `Pre-webinar Yes leads are worth ${money(preWebinarYes.cashPerLead)} per lead versus ${money(preWebinarNo.cashPerLead)} for No. Review this cohort separately in budget and sales follow-up meetings.`,
+      metric: `${pct(preWebinarYes.closedRate)} close rate`
+    });
+  }
+
+  if (email && fb) {
+    recommendations.push({
+      priority: "High",
+      title: "Do not rank sources by volume alone",
+      body: `Facebook has ${fb.leads.toLocaleString()} leads but only ${money(fb.cashPerLead)} per lead. Email has fewer leads and ${money(email.cashPerLead)} per lead, so source decisions should use value-weighted metrics.`,
+      metric: `${round(email.cashPerLead / Math.max(fb.cashPerLead, 1), 1)}x cash/lead lift`
+    });
+  }
+
+  if (bestCapital) {
+    recommendations.push({
+      priority: "Medium",
+      title: "Prioritize buyer-readiness questions in triage",
+      body: `${bestCapital.name} is the strongest substantial capital segment by cash per lead. Bring capital and payment readiness into the first sales qualification step.`,
+      metric: `${money(bestCapital.cashPerLead)} cash/lead`
+    });
+  }
+
+  if (topTheme) {
+    recommendations.push({
+      priority: "Medium",
+      title: "Align webinar copy to the highest-intent language",
+      body: `${topTheme.label} is the leading open-text theme. Use it in webinar framing, objection handling, and post-registration nurture.`,
+      metric: `${topTheme.count.toLocaleString()} mentions`
+    });
+  }
+
+  recommendations.push({
+    priority: "Medium",
+    title: "Reconcile payment records with close flags",
+    body: `${dataQuality.cashVsClosedMismatch.toLocaleString()} more rows have cash than closed flags. Revenue charts use cash collected; close-rate charts use the CRM close flag, so both fields should be cleaned together.`,
+    metric: `${summary.buyersWithCash.toLocaleString()} cash records`
+  });
+
+  return recommendations.slice(0, 6);
+}
+
+function buildReadGuide(summary, dataQuality) {
+  return {
+    buttonLabel: "How to read",
+    summary:
+      "This dashboard is designed as an executive performance readout. Start with the KPI row, confirm the funnel denominator, then compare segments by value quality rather than raw volume.",
+    order: [
+      {
+        title: "1. Start with the KPI row",
+        body: "Use captured leads, CRM coverage, booked calls, closed flags, and cash collected to understand the size of the cohort and the revenue denominator."
+      },
+      {
+        title: "2. Read the funnel as a leakage map",
+        body: "Step rate shows movement from the previous stage. Rate of leads shows how much of the original captured cohort remains at each stage."
+      },
+      {
+        title: "3. Compare acquisition by value",
+        body: "A source with more leads is not automatically better. Prefer cash per lead, close rate, and booked-from-CRM rate when deciding what deserves budget."
+      },
+      {
+        title: "4. Use the segment explorer to test hypotheses",
+        body: "Switch between campaign, source, capital, profession, income, and goal segments. Sort by cash per lead or close rate when looking for efficient cohorts."
+      },
+      {
+        title: "5. Check data health before final decisions",
+        body: "Missing attribution, missing scores, duplicates, and cash/closed mismatches can change interpretation. Treat warnings as decision risk, not decoration."
+      }
+    ],
+    metricDefinitions: [
+      {
+        metric: "Captured leads",
+        definition: "All rows in the CSV after import. This is the largest denominator."
+      },
+      {
+        metric: "CRM coverage",
+        definition: `${summary.crmLeads.toLocaleString()} rows marked Close_In_CRM = Yes, or ${pct(summary.rates.crmRate)} of captured leads.`
+      },
+      {
+        metric: "Booked rate",
+        definition: "Booked calls divided by captured leads. Booked-from-CRM divides booked calls by CRM leads."
+      },
+      {
+        metric: "Close rate",
+        definition: "Rows marked Close_Closed = Yes divided by captured leads. Close-from-booked divides closed flags by booked calls."
+      },
+      {
+        metric: "Cash per lead",
+        definition: "Cash collected divided by captured leads in that segment. This is the cleanest value-density metric."
+      },
+      {
+        metric: "Score coverage",
+        definition: `${dataQuality.scoreCoverage ? pct(dataQuality.scoreCoverage) : "0%"} of leads have a numeric lead score. Missing scores reduce confidence in grade and score charts.`
+      },
+      {
+        metric: "Data readiness",
+        definition: "A blended quality signal using score coverage, quiz richness, and duplicate-phone cleanliness."
+      }
+    ],
+    caveats: [
+      "Raw names, emails, and phone numbers are excluded from the API payload.",
+      "Cash records can exist without a matching closed flag, so cash and close-rate views answer related but different questions.",
+      "Unattributed rows are shown intentionally because they materially affect source and campaign reads.",
+      "Small segments can have high rates from only a few wins; use the lead count beside the rate before making a decision."
+    ]
+  };
+}
+
 const csvExists = await fs
   .access(csvPath)
   .then(() => true)
@@ -736,6 +922,9 @@ const output = {
   segments,
   dataQuality,
   themeAnalysis,
+  executiveSummary: buildExecutiveSummary(summary, segments, dataQuality),
+  recommendations: buildRecommendations(summary, segments, dataQuality, themeAnalysis),
+  readGuide: buildReadGuide(summary, dataQuality),
   insights: buildInsights(summary, segments, dataQuality, themeAnalysis)
 };
 

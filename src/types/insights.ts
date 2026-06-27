@@ -65,6 +65,38 @@ export type ThemeItem = {
   shareOfAnswered: number;
 };
 
+export type ExecutiveSummary = {
+  title: string;
+  body: string;
+  primaryRead: Array<{
+    label: string;
+    value: string;
+    detail: string;
+  }>;
+  strongestSignals: string[];
+};
+
+export type Recommendation = {
+  priority: "High" | "Medium" | "Low";
+  title: string;
+  body: string;
+  metric: string;
+};
+
+export type ReadGuide = {
+  buttonLabel: string;
+  summary: string;
+  order: Array<{
+    title: string;
+    body: string;
+  }>;
+  metricDefinitions: Array<{
+    metric: string;
+    definition: string;
+  }>;
+  caveats: string[];
+};
+
 export type InsightData = {
   meta: {
     sourceFile: string;
@@ -144,6 +176,9 @@ export type InsightData = {
       themes: ThemeItem[];
     };
   };
+  executiveSummary: ExecutiveSummary;
+  recommendations: Recommendation[];
+  readGuide: ReadGuide;
   insights: Array<{
     title: string;
     body: string;
