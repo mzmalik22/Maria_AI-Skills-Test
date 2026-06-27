@@ -1,6 +1,7 @@
 # IM Accelerator Landing Page
 
 A polished, responsive, frontend-only landing page built from scratch based on the reference masterclass page.
+Link https://maria-ai-skills-test-3qiz.vercel.app/
 
 ## Files
 
